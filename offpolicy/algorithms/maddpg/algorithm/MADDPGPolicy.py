@@ -115,7 +115,6 @@ class MADDPGPolicy(MLPPolicy):
                 actions = actor_out
             # # clip the actions at the bounds of the action space
             # actions = torch.max(torch.min(actions, torch.from_numpy(self.act_space.high)), torch.from_numpy(self.act_space.low))
-
         return actions, eps
 
     def get_random_actions(self, obs, available_actions=None):

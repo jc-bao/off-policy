@@ -37,7 +37,6 @@ class MADDPG_Actor(nn.Module):
         x = self.mlp(x)
         # pass outputs through linear layer
         action = self.act(x)
-
         return action
 
 

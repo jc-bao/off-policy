@@ -6,19 +6,20 @@ from offpolicy.utils.util import is_multidiscrete
 from offpolicy.runner.mlp.base_runner import MlpRunner
 
 class MPERunner(MlpRunner):
-    def __init__(self, config):
+    def __init__(self, config, render = False):
         """Runner class for the Multi-Agent Particle Env (MPE)  environment. See parent class for more information."""
         super(MPERunner, self).__init__(config)
         self.collecter = self.shared_collect_rollout if self.share_policy else self.separated_collect_rollout
+        self.render = render
         # fill replay buffer with random actions
         self.finish_first_train_reset = False
         num_warmup_episodes = max((int(self.batch_size//self.episode_length) + 1, self.args.num_random_episodes))
-        self.warmup(num_warmup_episodes)
+        if not self.render: self.warmup(num_warmup_episodes)
         self.start = time.time()
         self.log_clear()
 
     @torch.no_grad()
-    def eval(self, render = False):
+    def eval(self):
         """Collect episodes to evaluate the policy."""
         self.trainer.prep_rollout()
         eval_infos = {}
@@ -26,25 +27,11 @@ class MPERunner(MlpRunner):
         eval_infos['final_episode_rewards'] = []
 
         for _ in range(self.args.num_eval_episodes):
-            env_info = self.collecter( explore=False, training_episode=False, warmup=False, render = render)
+            env_info = self.collecter( explore=False, training_episode=False, warmup=False, render = self.render)
             for k, v in env_info.items():
                 eval_infos[k].append(v)
-        print('average_episode_rewards:',np.mean(eval_infos['average_episode_rewards']) , 'final_step_rewards:', np.mean(eval_infos['final_episode_rewards']))
+        # print('average_episode_rewards:',np.mean(eval_infos['average_episode_rewards']) , 'final_step_rewards:', np.mean(eval_infos['final_episode_rewards']))
         self.log_env(eval_infos, suffix="eval_")
-
-    @torch.no_grad()
-    def render(self):
-        """Collect episodes to evaluate the policy."""
-        self.trainer.prep_rollout()
-        eval_infos['average_episode_rewards'] = []
-        eval_infos['final_episode_rewards'] = []
-        eval_infos = {}
-
-        for _ in range(self.args.num_eval_episodes):
-            env_info = self.collecter( explore=False, training_episode=False, warmup=False)
-            for k, v in env_info.items():
-                eval_infos[k].append(v)
-        print('average_episode_rewards:',np.mean(eval_infos['average_episode_rewards']) , 'final_step_rewards:', np.mean(eval_infos['final_episode_rewards']))
 
     # for mpe-simple_spread and mpe-simple_reference
     def shared_collect_rollout(self, explore=True, training_episode=True, warmup=False, render = False):
@@ -74,7 +61,6 @@ class MPERunner(MlpRunner):
                 obs = env.reset()
                 share_obs = obs.reshape(n_rollout_threads, -1)
                 self.finish_first_train_reset = True
-
         # init
         episode_rewards = []
         step_obs = {}
@@ -108,8 +94,8 @@ class MPERunner(MlpRunner):
             # env step and store the relevant episode information
             next_obs, rewards, dones, infos = env.step(env_acts)
             if render: 
+                # print('step:', step,' rew:', rewards,' done:', dones, 'action: ', env_acts)
                 env.render()
-                print('rendering~~~')
 
             episode_rewards.append(rewards)
             dones_env = np.all(dones, axis=1)
@@ -261,8 +247,8 @@ class MPERunner(MlpRunner):
             # env step and store the relevant episode information
             next_obs, rewards, dones, infos = env.step(env_acts)
             if render: env.render()
-            eval_infos['average_episode_rewards'] = []
-            eval_infos['final_episode_rewards'] = []
+            env_info['average_episode_rewards'] = []
+            env_info['final_episode_rewards'] = []
 
             episode_rewards.append(rewards)
             dones_env = np.all(dones, axis=1)
@@ -346,7 +332,7 @@ class MPERunner(MlpRunner):
         #               self.total_env_steps,
         #               self.num_env_steps,
         #               int(self.total_env_steps / (end - self.start))))
-        print("\n timesteps {}/{}={}%,FPS{} \n".format(self.total_env_steps,self.num_env_steps, self.total_env_steps/self.num_env_steps*100, int(self.total_env_steps / (end - self.start))))
+        print("\n timesteps {}/{}={}%,FPS {} \n".format(self.total_env_steps,self.num_env_steps, self.total_env_steps/self.num_env_steps*100, int(self.total_env_steps / (end - self.start))))
         # for p_id, train_info in zip(self.policy_ids, self.train_infos):
         #     self.log_train(p_id, train_info)
 

@@ -275,8 +275,8 @@ class MlpRunner(object):
         for pid in self.policy_ids:
             path = str(self.model_dir) + str(pid)
             print("load the pretrained model from {}".format(path))
-            policy_critic_state_dict = torch.load(path + '/critic.pt')
-            policy_actor_state_dict = torch.load(path + '/actor.pt')
+            policy_critic_state_dict = torch.load(path + '/critic.pt' ,map_location=torch.device(self.device))
+            policy_actor_state_dict = torch.load(path + '/actor.pt' ,map_location=torch.device(self.device))
 
             self.policies[pid].critic.load_state_dict(policy_critic_state_dict)
             self.policies[pid].actor.load_state_dict(policy_actor_state_dict)
