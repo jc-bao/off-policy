@@ -18,7 +18,7 @@ class MPERunner(MlpRunner):
         self.log_clear()
 
     @torch.no_grad()
-    def eval(self):
+    def eval(self, render = False):
         """Collect episodes to evaluate the policy."""
         self.trainer.prep_rollout()
         eval_infos = {}
@@ -26,14 +26,28 @@ class MPERunner(MlpRunner):
         eval_infos['final_episode_rewards'] = []
 
         for _ in range(self.args.num_eval_episodes):
-            env_info = self.collecter( explore=False, training_episode=False, warmup=False)
+            env_info = self.collecter( explore=False, training_episode=False, warmup=False, render = render)
             for k, v in env_info.items():
                 eval_infos[k].append(v)
         print('average_episode_rewards:',np.mean(eval_infos['average_episode_rewards']) , 'final_step_rewards:', np.mean(eval_infos['final_episode_rewards']))
         self.log_env(eval_infos, suffix="eval_")
 
+    @torch.no_grad()
+    def render(self):
+        """Collect episodes to evaluate the policy."""
+        self.trainer.prep_rollout()
+        eval_infos['average_episode_rewards'] = []
+        eval_infos['final_episode_rewards'] = []
+        eval_infos = {}
+
+        for _ in range(self.args.num_eval_episodes):
+            env_info = self.collecter( explore=False, training_episode=False, warmup=False)
+            for k, v in env_info.items():
+                eval_infos[k].append(v)
+        print('average_episode_rewards:',np.mean(eval_infos['average_episode_rewards']) , 'final_step_rewards:', np.mean(eval_infos['final_episode_rewards']))
+
     # for mpe-simple_spread and mpe-simple_reference
-    def shared_collect_rollout(self, explore=True, training_episode=True, warmup=False):
+    def shared_collect_rollout(self, explore=True, training_episode=True, warmup=False, render = False):
         """
         Collect a rollout and store it in the buffer. All agents share a single policy. Do training steps when appropriate
         :param explore: (bool) whether to use an exploration strategy when collecting the episoide.
@@ -93,6 +107,9 @@ class MPERunner(MlpRunner):
 
             # env step and store the relevant episode information
             next_obs, rewards, dones, infos = env.step(env_acts)
+            if render: 
+                env.render()
+                print('rendering~~~')
 
             episode_rewards.append(rewards)
             dones_env = np.all(dones, axis=1)
@@ -144,17 +161,17 @@ class MPERunner(MlpRunner):
             if training_episode:
                 self.total_env_steps += n_rollout_threads
                 if (self.last_train_T == 0 or ((self.total_env_steps - self.last_train_T) / self.train_interval) >= 1):
+                    # print('train!!!', self.total_env_steps, self.last_train_T)
                     self.train()
                     self.total_train_steps += 1
                     self.last_train_T = self.total_env_steps
-            
         average_episode_rewards = np.mean(np.sum(episode_rewards, axis=0))
         env_info['average_episode_rewards'] = average_episode_rewards
         env_info['final_episode_rewards'] = np.mean(episode_rewards[-1])
         return env_info
 
     # for mpe-simple_speaker_listener 
-    def separated_collect_rollout(self, explore=True, training_episode=True, warmup=False):
+    def separated_collect_rollout(self, explore=True, training_episode=True, warmup=False, render = False):
         """
         Collect a rollout and store it in the buffer. Each agent has its own policy.. Do training steps when appropriate.
         :param explore: (bool) whether to use an exploration strategy when collecting the episoide.
@@ -243,6 +260,9 @@ class MPERunner(MlpRunner):
 
             # env step and store the relevant episode information
             next_obs, rewards, dones, infos = env.step(env_acts)
+            if render: env.render()
+            eval_infos['average_episode_rewards'] = []
+            eval_infos['final_episode_rewards'] = []
 
             episode_rewards.append(rewards)
             dones_env = np.all(dones, axis=1)

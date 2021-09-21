@@ -107,7 +107,7 @@ class ShareVecEnv(ABC):
         return self.step_wait()
 
     def render(self, mode='human'):
-        from utils.util import tile_images
+        from offpolicy.utils.util import tile_images
         imgs = self.get_images()
         bigimg = tile_images(imgs)
         if mode == 'human':
@@ -437,6 +437,9 @@ class DummyVecEnv(ShareVecEnv):
     def close(self):
         for env in self.envs:
             env.close()
+
+    def render(self):
+        self.envs[0].render()
 
 
 class ShareDummyVecEnv(ShareVecEnv):
