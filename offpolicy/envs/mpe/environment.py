@@ -138,7 +138,7 @@ class MultiAgentEnv(gym.Env):
 
         if self.post_step_callback is not None:
             self.post_step_callback(self.world)
-
+        
         return obs_n, reward_n, done_n, info_n
 
     def reset(self):

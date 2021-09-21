@@ -182,7 +182,6 @@ class MlpPolicyBuffer(object):
 
         # obs: [step, episode, agent, dim]
         assert obs.shape[0] == num_insert_steps, ("different size!")
-
         if self.current_i + num_insert_steps <= self.buffer_size:
             idx_range = np.arange(self.current_i, self.current_i + num_insert_steps)
         else:
@@ -204,7 +203,6 @@ class MlpPolicyBuffer(object):
 
         self.current_i = idx_range[-1] + 1
         self.filled_i = min(self.filled_i + len(idx_range), self.buffer_size)
-
         return idx_range
 
     def sample_inds(self, sample_inds):
@@ -283,7 +281,6 @@ class PrioritizedMlpReplayBuffer(MlpReplayBuffer):
             for p_id in self.policy_info.keys():
                 self._it_sums[p_id][idx] = self.max_priorities[p_id] ** self.alpha
                 self._it_mins[p_id][idx] = self.max_priorities[p_id] ** self.alpha
-
         return idx_range
 
     def _sample_proportional(self, batch_size, p_id=None):
