@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import wandb
 import torch
 from tensorboardX import SummaryWriter
 
@@ -94,17 +93,14 @@ class RecRunner(object):
 
         # dir
         self.model_dir = self.args.model_dir
-        if self.use_wandb:
-            self.save_dir = str(wandb.run.dir)
-        else:
-            self.run_dir = config["run_dir"]
-            self.log_dir = str(self.run_dir / 'logs')
-            if not os.path.exists(self.log_dir):
-                os.makedirs(self.log_dir)
-            self.writter = SummaryWriter(self.log_dir)
-            self.save_dir = str(self.run_dir / 'models')
-            if not os.path.exists(self.save_dir):
-                os.makedirs(self.save_dir)
+        self.run_dir = config["run_dir"]
+        self.log_dir = str(self.run_dir / 'logs')
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
+        self.writter = SummaryWriter(self.log_dir)
+        self.save_dir = str(self.run_dir / 'models')
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir)
 
         # initialize all the policies and organize the agents corresponding to each policy
         if self.algorithm_name == "rmatd3":
@@ -355,10 +351,7 @@ class RecRunner(object):
                 v = np.mean(v)
                 suffix_k = k if suffix is None else suffix + k 
                 print(suffix_k + " is " + str(v))
-                if self.use_wandb:
-                    wandb.log({suffix_k: v}, step=self.total_env_steps)
-                else:
-                    self.writter.add_scalars(suffix_k, {suffix_k: v}, self.total_env_steps)
+                self.writter.add_scalars(suffix_k, {suffix_k: v}, self.total_env_steps)
 
     def log_train(self, policy_id, train_info):
         """
@@ -368,10 +361,7 @@ class RecRunner(object):
         """
         for k, v in train_info.items():
             policy_k = str(policy_id) + '/' + k
-            if self.use_wandb:
-                wandb.log({policy_k: v}, step=self.total_env_steps)
-            else:
-                self.writter.add_scalars(policy_k, {policy_k: v}, self.total_env_steps)
+            self.writter.add_scalars(policy_k, {policy_k: v}, self.total_env_steps)
 
     def collect_rollout(self):
         """Collect a rollout and store it in the buffer."""

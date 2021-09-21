@@ -1,4 +1,3 @@
-import wandb
 import numpy as np
 from itertools import chain
 import torch
@@ -316,15 +315,16 @@ class MPERunner(MlpRunner):
     def log(self):
         """See parent class."""
         end = time.time()
-        print("\n Env {} Algo {} Exp {} runs total num timesteps {}/{}, FPS {}.\n"
-              .format(self.args.scenario_name,
-                      self.algorithm_name,
-                      self.args.experiment_name,
-                      self.total_env_steps,
-                      self.num_env_steps,
-                      int(self.total_env_steps / (end - self.start))))
-        for p_id, train_info in zip(self.policy_ids, self.train_infos):
-            self.log_train(p_id, train_info)
+        # print("\n Env {} Algo {} Exp {} runs total num timesteps {}/{}, FPS {}.\n"
+        #       .format(self.args.scenario_name,
+        #               self.algorithm_name,
+        #               self.args.experiment_name,
+        #               self.total_env_steps,
+        #               self.num_env_steps,
+        #               int(self.total_env_steps / (end - self.start))))
+        print("\n timesteps {}/{}={}%,FPS{} \n",self.total_env_steps,self.num_env_steps, self.total_env_steps/self.num_env_steps*100, int(self.total_env_steps / (end - self.start)))
+        # for p_id, train_info in zip(self.policy_ids, self.train_infos):
+        #     self.log_train(p_id, train_info)
 
         self.log_env(self.env_infos)
         self.log_clear()
@@ -336,10 +336,7 @@ class MPERunner(MlpRunner):
                 v = np.mean(v)
                 suffix_k = k if suffix is None else suffix + k 
                 print(suffix_k + " is " + str(v))
-                if self.use_wandb:
-                    wandb.log({suffix_k: v}, step=self.total_env_steps)
-                else:
-                    self.writter.add_scalars(suffix_k, {suffix_k: v}, self.total_env_steps)
+                self.writter.add_scalars(suffix_k, {suffix_k: v}, self.total_env_steps)
 
     def log_clear(self):
         """See parent class."""
