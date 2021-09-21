@@ -29,7 +29,7 @@ class MPERunner(MlpRunner):
             env_info = self.collecter( explore=False, training_episode=False, warmup=False)
             for k, v in env_info.items():
                 eval_infos[k].append(v)
-                print('eval:', k, ' reward:', v)
+        print('average_episode_rewards:',np.mean(eval_infos['average_episode_rewards']) , 'final_step_rewards:', np.mean(eval_infos['final_episode_rewards']))
         self.log_env(eval_infos, suffix="eval_")
 
     # for mpe-simple_spread and mpe-simple_reference

@@ -277,7 +277,7 @@ class PrioritizedMlpReplayBuffer(MlpReplayBuffer):
         """See parent class."""
         idx_range = super().insert(num_insert_steps, obs, share_obs, acts, rewards, next_obs, next_share_obs, dones,
                                    dones_env, valid_transition, avail_acts, next_avail_acts)
-        for idx in range(idx_range[0], idx_range[1]):
+        for idx in range(idx_range[0], idx_range[-1]):
             for p_id in self.policy_info.keys():
                 self._it_sums[p_id][idx] = self.max_priorities[p_id] ** self.alpha
                 self._it_mins[p_id][idx] = self.max_priorities[p_id] ** self.alpha
