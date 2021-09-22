@@ -326,7 +326,7 @@ class MPERunner(MlpRunner):
                             self.total_train_steps += 1
                         self.last_train_T = self.total_env_steps
                 elif self.total_env_steps > self.batch_size:
-                    k = (self.total_env_steps / self.buffer_size + 1 )/2
+                    k = min((self.total_env_steps / self.buffer_size + 1 )/2, 1)
                     for _ in range(int((self.total_env_steps - self.last_train_T) / self.train_interval * k)):
                         self.train()
                         self.total_train_steps += 1
