@@ -106,7 +106,7 @@ class MPERunner(MlpRunner):
             if not explore and np.all(dones_env):
                 average_episode_rewards = np.mean(np.sum(episode_rewards, axis=0))
                 env_info['average_episode_rewards'] = average_episode_rewards
-                env_info['final_episode_rewards'] = np.mean(episode_rewards[-1])
+                env_info['final_episode_rewards'] = np.mean(np.array(episode_rewards), axis = 1)[-1][0][0]
                 return env_info
 
             next_share_obs = next_obs.reshape(n_rollout_threads, -1)
@@ -153,7 +153,7 @@ class MPERunner(MlpRunner):
                     self.last_train_T = self.total_env_steps
         average_episode_rewards = np.mean(np.sum(episode_rewards, axis=0))
         env_info['average_episode_rewards'] = average_episode_rewards
-        env_info['final_episode_rewards'] = np.mean(episode_rewards[-1])
+        env_info['final_episode_rewards'] = np.mean(np.array(episode_rewards), axis = 1)[-1][0][0]
         return env_info
 
     # for mpe-simple_speaker_listener 
@@ -232,7 +232,6 @@ class MPERunner(MlpRunner):
                     act, _ = policy.get_actions(agent_obs[agent_id],
                                                 t_env=self.total_env_steps,
                                                 explore=explore)
-
                 if not isinstance(act, np.ndarray):
                     act = act.cpu().detach().numpy()
                 acts[agent_id] = act
@@ -252,14 +251,14 @@ class MPERunner(MlpRunner):
 
             episode_rewards.append(rewards)
             dones_env = np.all(dones, axis=1)
-
+            # print('===\n rewards: {},\n acts: {}, \ndones: {},\nstep:, {}\n ===\n'.format(rewards,env_acts,dones,step))
             if explore and n_rollout_threads == 1 and np.all(dones_env):
                 next_obs = env.reset()
 
             if not explore and np.all(dones_env):
                 average_episode_rewards = np.mean(np.sum(episode_rewards, axis=0))
                 env_info['average_episode_rewards'] = average_episode_rewards
-                env_info['average_episode_rewards'] = np.sum(episode_rewards, axis=0)[0]
+                env_info['final_episode_rewards'] = np.mean(np.array(episode_rewards), axis = 1)[-1][0][0]
                 return env_info
 
             next_share_obs = []
@@ -312,14 +311,14 @@ class MPERunner(MlpRunner):
             if training_episode:
                 self.total_env_steps += n_rollout_threads
                 if (self.last_train_T == 0 or ((self.total_env_steps - self.last_train_T) / self.train_interval) >= 1):
-                    self.train()
-                    self.total_train_steps += 1
+                    for _ in range((self.total_env_steps - self.last_train_T) / self.train_interval):
+                        self.train()
+                        self.total_train_steps += 1
                     self.last_train_T = self.total_env_steps
 
         average_episode_rewards = np.mean(np.sum(episode_rewards, axis=0))
         env_info['average_episode_rewards'] = average_episode_rewards
-        env_info['final_episode_rewards'] = np.mean(episode_rewards[-1])
-
+        env_info['final_episode_rewards'] = np.mean(np.array(episode_rewards), axis = 1)[-1][0][0]
         return env_info
 
     def log(self):
