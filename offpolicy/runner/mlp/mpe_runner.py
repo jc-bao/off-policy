@@ -11,9 +11,13 @@ class MPERunner(MlpRunner):
         super(MPERunner, self).__init__(config)
         self.collecter = self.shared_collect_rollout if self.share_policy else self.separated_collect_rollout
         self.render = render
+        self.use_warmup = config.all_args.use_warmup
         # fill replay buffer with random actions
         self.finish_first_train_reset = False
-        num_warmup_episodes = max((int(self.batch_size//self.episode_length) + 1, self.args.num_random_episodes))
+        if self.use_warmup:
+            num_warmup_episodes = max((int(self.batch_size//self.episode_length) + 1, self.args.num_random_episodes))
+        else: 
+            num_warmup_episodes = 0
         if not self.render: self.warmup(num_warmup_episodes)
         self.start = time.time()
         self.log_clear()
@@ -310,12 +314,19 @@ class MPERunner(MlpRunner):
             # train
             if training_episode:
                 self.total_env_steps += n_rollout_threads
-                if self.last_train_T == 0:
-                    self.train()
-                    self.total_train_steps += 1
-                    self.last_train_T = self.total_env_steps
-                else:
-                    k = min((self.total_env_steps - self.buffer_size) / self.buffer_size, 1)
+                if self.use_warmup:
+                    if self.last_train_T == 0:
+                        self.train()
+                        self.total_train_steps += 1
+                        self.last_train_T = self.total_env_steps
+                    else:
+                        k = min((self.total_env_steps - self.buffer_size) / self.buffer_size, 1)
+                        for _ in range(int((self.total_env_steps - self.last_train_T) / self.train_interval * k)):
+                            self.train()
+                            self.total_train_steps += 1
+                        self.last_train_T = self.total_env_steps
+                elif self.total_env_steps > self.batch_size:
+                    k = (self.total_env_steps / self.buffer_size + 1 )/2
                     for _ in range(int((self.total_env_steps - self.last_train_T) / self.train_interval * k)):
                         self.train()
                         self.total_train_steps += 1
