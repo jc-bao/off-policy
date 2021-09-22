@@ -310,8 +310,13 @@ class MPERunner(MlpRunner):
             # train
             if training_episode:
                 self.total_env_steps += n_rollout_threads
-                if (self.last_train_T == 0 or ((self.total_env_steps - self.last_train_T) / self.train_interval) >= 1):
-                    for _ in range(int((self.total_env_steps - self.last_train_T) / self.train_interval)):
+                if self.last_train_T == 0:
+                    self.train()
+                    self.total_train_steps += 1
+                    self.last_train_T = self.total_env_steps
+                else:
+                    k = min((self.total_env_steps - self.buffer_size) / self.buffer_size, 1)
+                    for _ in range(int((self.total_env_steps - self.last_train_T) / self.train_interval * k)):
                         self.train()
                         self.total_train_steps += 1
                     self.last_train_T = self.total_env_steps
