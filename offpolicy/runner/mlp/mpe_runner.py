@@ -11,7 +11,7 @@ class MPERunner(MlpRunner):
         super(MPERunner, self).__init__(config)
         self.collecter = self.shared_collect_rollout if self.share_policy else self.separated_collect_rollout
         self.render = render
-        self.use_warmup = config['all_args'].use_warmup
+        self.use_warmup = config['args'].use_warmup
         # fill replay buffer with random actions
         self.finish_first_train_reset = False
         if self.use_warmup:
