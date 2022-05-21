@@ -191,4 +191,6 @@ def get_config():
     # pretained parameters
     parser.add_argument("--model_dir", type=str, default=None)
 
+    parser.add_argument('--use_warmup',
+                        default='True', help="if use warm_up")
     return parser

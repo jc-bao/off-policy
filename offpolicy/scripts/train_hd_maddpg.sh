@@ -1,6 +1,6 @@
 #!/bin/sh
 env="MPE"
-scenario="simple_spread"
+scenario="formation"
 num_landmarks=3
 num_agents=3
 algo="maddpg"
